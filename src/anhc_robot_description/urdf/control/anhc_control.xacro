@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ANHC CONTROL — Fixed for Gazebo Harmonic (gz-sim 8.x)
+       ═══════════════════════════════════════════════════════════ -->
+
+  <xacro:macro name="anhc_control" params="">
+
+    <!-- ── ros2_control hardware tag ────────────────────────── -->
+    <ros2_control name="anhc_gz_system" type="system">
+      <hardware>
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      </hardware>
+
+      <joint name="anhc_fl_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-5.0</param>
+          <param name="max"> 5.0</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="anhc_fr_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-5.0</param>
+          <param name="max"> 5.0</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="anhc_rl_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-5.0</param>
+          <param name="max"> 5.0</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+      <joint name="anhc_rr_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-5.0</param>
+          <param name="max"> 5.0</param>
+        </command_interface>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+      </joint>
+    </ros2_control>
+
+    <!-- ── gz_ros2_control plugin (Harmonic format) ─────────── -->
+    <gazebo>
+      <plugin filename="gz_ros2_control-system"
+              name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>$(find anhc_robot_simulation)/config/anhc_controllers.yaml</parameters>
+      </plugin>
+    </gazebo>
+
+    <!-- ── DiffDrive plugin (Gazebo Harmonic correct name) ──── -->
+    <!--
+      In Gazebo Harmonic the plugin library is:
+        gz-sim-diff-drive-system
+      topic for cmd_vel is read from <topic> tag
+      TF is published on /model/<model_name>/tf internally
+      which we bridge via tf_bridge node in the launch file
+    -->
+    <gazebo>
+      <plugin
+        filename="gz-sim-diff-drive-system"
+        name="gz::sim::systems::DiffDrive">
+
+        <left_joint>anhc_fl_wheel_joint</left_joint>
+        <left_joint>anhc_rl_wheel_joint</left_joint>
+        <right_joint>anhc_fr_wheel_joint</right_joint>
+        <right_joint>anhc_rr_wheel_joint</right_joint>
+
+        <wheel_separation>0.400</wheel_separation>
+        <wheel_radius>0.075</wheel_radius>
+
+        <!-- Listen for velocity commands -->
+        <topic>/anhc/cmd_vel</topic>
+
+        <!-- Publish odometry -->
+        <odom_topic>/anhc/odom</odom_topic>
+
+        <!-- Publish TF: odom → base_footprint -->
+        <tf_topic>/model/anhc_robot/tf</tf_topic>
+        <frame_id>odom</frame_id>
+        <child_frame_id>base_footprint</child_frame_id>
+
+        <odom_publish_frequency>30</odom_publish_frequency>
+
+        <max_linear_acceleration>2.0</max_linear_acceleration>
+        <min_linear_acceleration>-2.0</min_linear_acceleration>
+        <max_angular_acceleration>3.0</max_angular_acceleration>
+        <min_angular_acceleration>-3.0</min_angular_acceleration>
+      </plugin>
+    </gazebo>
+
+  </xacro:macro>
+</robot>

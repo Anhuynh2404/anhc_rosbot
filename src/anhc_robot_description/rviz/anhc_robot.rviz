@@ -1,0 +1,85 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+
+Visualization Manager:
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 0.5
+      Color: 160; 160; 164
+
+    - Class: rviz_default_plugins/RobotModel
+      Name: RobotModel
+      Enabled: true
+      Description Topic:
+        Value: /robot_description
+
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: true
+      Show Axes: true
+      Show Names: false
+
+    - Class: rviz_default_plugins/LaserScan
+      Name: LaserScan_2D
+      Enabled: true
+      Topic:
+        Value: /anhc/scan
+      Color: 255; 0; 0
+      Size (m): 0.03
+
+    - Class: rviz_default_plugins/PointCloud2
+      Name: PointCloud2_3D
+      Enabled: true
+      Topic:
+        Value: /anhc/lidar_3d/points
+      Color Transformer: AxisColor
+      Axis: Z
+      Size (m): 0.02
+
+    - Class: rviz_default_plugins/Odometry
+      Name: Odometry
+      Enabled: true
+      Topic:
+        Value: /anhc/odom
+      Keep: 100
+
+    - Class: rviz_default_plugins/Path
+      Name: AStarPath
+      Enabled: true
+      Topic:
+        Value: /anhc/planned_path
+      Color: 0; 255; 0
+      Line Width: 0.05
+
+    - Class: rviz_default_plugins/Marker
+      Name: GoalMarker
+      Enabled: true
+      Topic:
+        Value: /anhc/goal_marker
+
+    - Class: rviz_default_plugins/Map
+      Name: OccupancyMap
+      Enabled: true
+      Topic:
+        Value: /anhc/map
+      Color Scheme: map
+
+  Global Options:
+    Fixed Frame: odom
+    Frame Rate: 30
+
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 8.0
+      Focal Point:
+        X: 0.0
+        Y: 0.0
+        Z: 0.0
+      Pitch: 0.9
+      Yaw: 0.785

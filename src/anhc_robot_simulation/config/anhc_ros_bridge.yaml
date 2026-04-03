@@ -1,0 +1,71 @@
+# ═══════════════════════════════════════════════════════════════
+# ANHC ROS ↔ Gazebo Bridge Configuration
+#
+# Direction key:
+#   GZ_TO_ROS  : Gazebo publishes  → ROS 2 subscribes
+#   ROS_TO_GZ  : ROS 2 publishes   → Gazebo subscribes
+#   BIDIRECTIONAL : both directions
+# ═══════════════════════════════════════════════════════════════
+
+# ── Differential Drive Command ─────────────────────────────────
+- ros_topic_name:  "/anhc/cmd_vel"
+  gz_topic_name:   "/anhc/cmd_vel"
+  ros_type_name:   "geometry_msgs/msg/Twist"
+  gz_type_name:    "gz.msgs.Twist"
+  direction:       ROS_TO_GZ
+
+# ── Odometry ───────────────────────────────────────────────────
+- ros_topic_name:  "/anhc/odom"
+  gz_topic_name:   "/anhc/odom"
+  ros_type_name:   "nav_msgs/msg/Odometry"
+  gz_type_name:    "gz.msgs.Odometry"
+  direction:       GZ_TO_ROS
+
+# ── TF (odom → base_footprint from Gazebo DiffDrive) ───────────
+- ros_topic_name:  "/tf"
+  gz_topic_name:   "/tf"
+  ros_type_name:   "tf2_msgs/msg/TFMessage"
+  gz_type_name:    "gz.msgs.Pose_V"
+  direction:       GZ_TO_ROS
+
+# ── 2D Laser Scanner ───────────────────────────────────────────
+- ros_topic_name:  "/anhc/scan"
+  gz_topic_name:   "/anhc/scan"
+  ros_type_name:   "sensor_msgs/msg/LaserScan"
+  gz_type_name:    "gz.msgs.LaserScan"
+  direction:       GZ_TO_ROS
+
+# ── 3D LiDAR Point Cloud ───────────────────────────────────────
+- ros_topic_name:  "/anhc/lidar_3d/points"
+  gz_topic_name:   "/anhc/lidar_3d/points"
+  ros_type_name:   "sensor_msgs/msg/PointCloud2"
+  gz_type_name:    "gz.msgs.PointCloudPacked"
+  direction:       GZ_TO_ROS
+
+# ── RGB Camera Image ───────────────────────────────────────────
+- ros_topic_name:  "/anhc/camera/image_raw"
+  gz_topic_name:   "/anhc/camera/image"
+  ros_type_name:   "sensor_msgs/msg/Image"
+  gz_type_name:    "gz.msgs.Image"
+  direction:       GZ_TO_ROS
+
+# ── Camera Info ────────────────────────────────────────────────
+- ros_topic_name:  "/anhc/camera/camera_info"
+  gz_topic_name:   "/anhc/camera/camera_info"
+  ros_type_name:   "sensor_msgs/msg/CameraInfo"
+  gz_type_name:    "gz.msgs.CameraInfo"
+  direction:       GZ_TO_ROS
+
+# ── Joint States ───────────────────────────────────────────────
+- ros_topic_name:  "/joint_states"
+  gz_topic_name:   "/joint_states"
+  ros_type_name:   "sensor_msgs/msg/JointState"
+  gz_type_name:    "gz.msgs.Model"
+  direction:       GZ_TO_ROS
+
+# ── Clock (sim time) ───────────────────────────────────────────
+- ros_topic_name:  "/clock"
+  gz_topic_name:   "/clock"
+  ros_type_name:   "rosgraph_msgs/msg/Clock"
+  gz_type_name:    "gz.msgs.Clock"
+  direction:       GZ_TO_ROS

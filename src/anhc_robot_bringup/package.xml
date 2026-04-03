@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>anhc_robot_bringup</name>
+  <version>1.0.0</version>
+  <description>Launch files for the ANHC robot simulation and navigation stack</description>
+  <maintainer email="dev@anhc.com">anhc</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>ros2launch</exec_depend>
+  <exec_depend>anhc_robot_description</exec_depend>
+  <exec_depend>anhc_robot_simulation</exec_depend>
+  <exec_depend>anhc_robot_navigation</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

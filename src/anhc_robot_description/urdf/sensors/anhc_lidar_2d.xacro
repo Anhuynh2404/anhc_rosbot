@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="anhc_lidar_2d" params="parent_link xyz rpy">
+
+    <link name="anhc_lidar_2d_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.07 0.07 0.04"/></geometry>
+        <material name="anhc_lidar2d_material">
+          <color rgba="0.1 0.8 0.1 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.07 0.07 0.04"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="0.05"/>
+        <inertia ixx="0.001" ixy="0" ixz="0"
+                 iyy="0.001" iyz="0" izz="0.001"/>
+      </inertial>
+    </link>
+
+    <joint name="anhc_lidar_2d_joint" type="fixed">
+      <parent link="${parent_link}"/>
+      <child  link="anhc_lidar_2d_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <gazebo reference="anhc_lidar_2d_link">
+      <sensor name="anhc_lidar_2d_sensor" type="gpu_lidar">
+        <topic>/anhc/scan</topic>
+        <update_rate>15</update_rate>
+        <always_on>true</always_on>
+        <visualize>true</visualize>
+        <frame_id>anhc_lidar_2d_link</frame_id>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>540</samples>
+              <resolution>1</resolution>
+              <min_angle>-2.35619</min_angle>
+              <max_angle>2.35619</max_angle>
+            </horizontal>
+            <vertical>
+              <samples>1</samples>
+              <resolution>1</resolution>
+              <min_angle>0</min_angle>
+              <max_angle>0</max_angle>
+            </vertical>
+          </scan>
+          <range>
+            <min>0.1</min>
+            <max>30.0</max>
+            <resolution>0.01</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.005</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+</robot>

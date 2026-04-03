@@ -1,0 +1,43 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 50
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    anhc_diff_drive_controller:
+      type: diff_drive_controller/DiffDriveController
+
+anhc_diff_drive_controller:
+  ros__parameters:
+    left_wheel_names:  ["anhc_fl_wheel_joint", "anhc_rl_wheel_joint"]
+    right_wheel_names: ["anhc_fr_wheel_joint", "anhc_rr_wheel_joint"]
+
+    wheel_separation: 0.400
+    wheel_radius:     0.075
+
+    odom_frame_id:   odom
+    base_frame_id:   base_footprint
+
+    # Do NOT set use_sim_time here — inherited from controller_manager
+    publish_rate: 50.0
+
+    linear.x.has_velocity_limits:     true
+    linear.x.max_velocity:            1.0
+    linear.x.min_velocity:           -1.0
+    linear.x.has_acceleration_limits: true
+    linear.x.max_acceleration:        2.0
+    linear.x.min_acceleration:       -2.0
+
+    angular.z.has_velocity_limits:     true
+    angular.z.max_velocity:            2.0
+    angular.z.min_velocity:           -2.0
+    angular.z.has_acceleration_limits: true
+    angular.z.max_acceleration:        3.0
+    angular.z.min_acceleration:       -3.0
+
+    pose_covariance_diagonal:  [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+    twist_covariance_diagonal: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+    use_stamped_vel: false
+    open_loop: false
+    enable_odom_tf: true
