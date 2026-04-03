@@ -33,8 +33,8 @@
         <topic>/anhc/scan</topic>
         <update_rate>15</update_rate>
         <always_on>true</always_on>
+        <enabled>true</enabled>
         <visualize>true</visualize>
-        <frame_id>anhc_lidar_2d_link</frame_id>
         <lidar>
           <scan>
             <horizontal>
