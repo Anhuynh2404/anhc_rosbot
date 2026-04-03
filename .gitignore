@@ -1,0 +1,64 @@
+# ═══════════════════════════════════════════════════════════════
+# ROS 2 Colcon Workspace — .gitignore
+# ═══════════════════════════════════════════════════════════════
+
+# ── Colcon build artifacts ────────────────────────────────────
+build/
+install/
+log/
+
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+.eggs/
+
+# ── C++ build ─────────────────────────────────────────────────
+*.o
+*.so
+*.a
+*.dylib
+*.d
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
+CTestTestfile.cmake
+
+# ── IDE & Editor ──────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.cproject
+.settings/
+
+# ── OS files ──────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── ROS bags ──────────────────────────────────────────────────
+*.bag
+*.db3
+rosbag2_*/
+
+# ── ROS logs ──────────────────────────────────────────────────
+*.log
+rosout.log
+
+# ── Gazebo ────────────────────────────────────────────────────
+.gz/
+.ignition/
+
+# ── Misc ──────────────────────────────────────────────────────
+*.orig
+*.bak
+*.tmp
+.env
