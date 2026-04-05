@@ -1,0 +1,32 @@
+# ═══════════════════════════════════════════════════════════════
+# ANHC Navigation Stack Parameters
+# ═══════════════════════════════════════════════════════════════
+
+anhc_map_handler_node:
+  ros__parameters:
+    map_width_m:    20.0
+    map_height_m:   20.0
+    map_resolution: 0.1
+    map_origin_x:  -10.0
+    map_origin_y:  -10.0
+    publish_rate:    2.0
+    use_sim_time:    true
+
+anhc_planner_node:
+  ros__parameters:
+    map_resolution:   0.1
+    map_origin_x:   -10.0
+    map_origin_y:   -10.0
+    inflation_radius:   3
+    heuristic:      diagonal
+    goal_tolerance:    0.3
+    use_sim_time:     true
+
+anhc_path_follower_node:
+  ros__parameters:
+    max_linear_vel:   0.5
+    max_angular_vel:  1.0
+    goal_tolerance:   0.25
+    waypoint_tolerance: 0.3
+    lookahead_distance: 0.5
+    use_sim_time:      true

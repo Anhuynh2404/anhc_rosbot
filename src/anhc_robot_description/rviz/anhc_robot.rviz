@@ -20,9 +20,17 @@ Visualization Manager:
 
     - Class: rviz_default_plugins/TF
       Name: TF
-      Enabled: true
-      Show Axes: true
+      Enabled: false
+      Show Axes: false
       Show Names: false
+
+    - Class: rviz_default_plugins/Map
+      Name: OccupancyMap
+      Enabled: true
+      Topic:
+        Value: /anhc/map
+      Color Scheme: map
+      Alpha: 0.7
 
     - Class: rviz_default_plugins/LaserScan
       Name: LaserScan_2D
@@ -30,23 +38,7 @@ Visualization Manager:
       Topic:
         Value: /anhc/scan
       Color: 255; 0; 0
-      Size (m): 0.03
-
-    - Class: rviz_default_plugins/PointCloud2
-      Name: PointCloud2_3D
-      Enabled: true
-      Topic:
-        Value: /anhc/lidar_3d/points
-      Color Transformer: AxisColor
-      Axis: Z
-      Size (m): 0.02
-
-    - Class: rviz_default_plugins/Odometry
-      Name: Odometry
-      Enabled: true
-      Topic:
-        Value: /anhc/odom
-      Keep: 100
+      Size (m): 0.04
 
     - Class: rviz_default_plugins/Path
       Name: AStarPath
@@ -62,12 +54,20 @@ Visualization Manager:
       Topic:
         Value: /anhc/goal_marker
 
-    - Class: rviz_default_plugins/Map
-      Name: OccupancyMap
+    - Class: rviz_default_plugins/Marker
+      Name: LookaheadMarker
       Enabled: true
       Topic:
-        Value: /anhc/map
-      Color Scheme: map
+        Value: /anhc/follower/lookahead_marker
+
+    - Class: rviz_default_plugins/Odometry
+      Name: Odometry
+      Enabled: true
+      Topic:
+        Value: /anhc/odom
+      Keep: 200
+      Shape: Arrow
+      Color: 255; 165; 0
 
   Global Options:
     Fixed Frame: odom
@@ -75,11 +75,7 @@ Visualization Manager:
 
   Views:
     Current:
-      Class: rviz_default_plugins/Orbit
-      Distance: 8.0
-      Focal Point:
-        X: 0.0
-        Y: 0.0
-        Z: 0.0
-      Pitch: 0.9
-      Yaw: 0.785
+      Class: rviz_default_plugins/TopDownOrtho
+      Scale: 50
+      X: 0.0
+      Y: 0.0
