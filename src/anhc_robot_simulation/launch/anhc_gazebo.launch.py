@@ -73,7 +73,6 @@ def generate_launch_description():
         arguments=[
             '/anhc/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry',
             '/anhc/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
-            '/anhc/lidar_3d/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked',
             '/anhc/camera/image@sensor_msgs/msg/Image[gz.msgs.Image',
             '/anhc/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo',
             '/anhc/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',

@@ -91,6 +91,11 @@ class AnhcMapHandlerNode(Node):
         if not TF2_AVAILABLE or not self.odom_received:
             return self.robot_x, self.robot_y, self.robot_yaw
 
+        # Gazebo sometimes injects scoped sensor names not present in TF tree.
+        # Force 2D lidar frame to robot-mounted frame for stable mapping.
+        if 'lidar_2d' in frame_id or 'sensor' in frame_id:
+            frame_id = 'laser_frame'
+
         try:
             # Try to get transform from odom to sensor frame
             t = self.tf_buffer.lookup_transform(
@@ -140,6 +145,17 @@ class AnhcMapHandlerNode(Node):
 
             if self._ok(hr, hc):
                 self.grid[hr, hc] = 100
+
+        # Keep robot footprint free so planner start cell is never blocked.
+        robot_c = self._w2c(self.robot_x)
+        robot_r = self._w2r(self.robot_y)
+        clear_radius_cells = max(2, int(0.20 / self.resolution))
+        for dr in range(-clear_radius_cells, clear_radius_cells + 1):
+            for dc in range(-clear_radius_cells, clear_radius_cells + 1):
+                rr = robot_r + dr
+                cc = robot_c + dc
+                if self._ok(rr, cc):
+                    self.grid[rr, cc] = 0
 
     def publish_map(self):
         msg = OccupancyGrid()

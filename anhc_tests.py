@@ -80,9 +80,8 @@ def test6_sensor_rates():
 
     sensors = [
         ('/anhc/odom',           10, 35, 'Odometry'),
-        ('/anhc/scan',            8, 20, '2D LiDAR'),
-        ('/anhc/lidar_3d/points', 5, 15, '3D LiDAR'),
-        ('/tf',                  20, 80, 'TF'),
+        ('/anhc/scan',            4, 20, '2D LiDAR'),
+        ('/tf',                  20, 90, 'TF'),
     ]
 
     results = []

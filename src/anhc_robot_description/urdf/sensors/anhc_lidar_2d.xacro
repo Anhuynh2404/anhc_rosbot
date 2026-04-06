@@ -4,10 +4,14 @@
 
     <link name="laser_frame">
       <visual>
+        <!-- Original RPLidar mesh, rotated to match ROS X-forward convention -->
         <origin xyz="0 0 0" rpy="${-pi/2} 0 0"/>
         <geometry>
           <mesh filename="file://$(find anhc_robot_description)/meshes/rplidar/rplidar_s2.stl" scale="0.001 0.001 0.001"/>
         </geometry>
+        <material name="anhc_lidar2d_mat">
+          <color rgba="0.1 0.1 0.1 1.0"/>
+        </material>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -32,7 +36,7 @@
       type="gpu_lidar" requires ogre2 render engine.
     -->
     <gazebo reference="laser_frame">
-      <sensor name="anhc_lidar_2d_sensor" type="gpu_lidar">
+      <sensor name="anhc_lidar_2d_sensor" type="lidar">
         <pose>0 0 0 0 0 0</pose>
         <topic>/anhc/scan</topic>
         <frame_id>laser_frame</frame_id>
@@ -42,7 +46,7 @@
         <ray>
           <scan>
             <horizontal>
-              <samples>720</samples>
+              <samples>360</samples>
               <resolution>1</resolution>
               <min_angle>-3.14159</min_angle>
               <max_angle>3.14159</max_angle>

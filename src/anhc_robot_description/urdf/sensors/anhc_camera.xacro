@@ -5,9 +5,11 @@
 
     <link name="camera_link">
       <visual>
-        <!-- Use simple box to avoid mesh local-frame offsets -->
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-        <geometry><box size="0.025 0.09 0.025"/></geometry>
+        <!-- Original D435 mesh with corrected local orientation -->
+        <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi/2}"/>
+        <geometry>
+          <mesh filename="file://$(find anhc_robot_description)/meshes/intel_realsense/visual/d435.stl"/>
+        </geometry>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>

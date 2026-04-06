@@ -8,7 +8,6 @@
 
   <!-- ── Include subsystem xacros ────────────────────────────── -->
   <xacro:include filename="$(find anhc_robot_description)/urdf/mech/anhc_base.xacro"/>
-  <xacro:include filename="$(find anhc_robot_description)/urdf/sensors/anhc_lidar_3d.xacro"/>
   <xacro:include filename="$(find anhc_robot_description)/urdf/sensors/anhc_lidar_2d.xacro"/>
   <xacro:include filename="$(find anhc_robot_description)/urdf/sensors/anhc_camera.xacro"/>
   <xacro:include filename="$(find anhc_robot_description)/urdf/control/anhc_control.xacro"/>
@@ -23,36 +22,19 @@
   <!-- ── Instantiate Mechanical Base ─────────────────────────── -->
   <!-- (base.xacro defines base_footprint, base_link, 4 wheels) -->
 
-  <!-- ── Place 3D LiDAR on top-center of chassis ─────────────── -->
-  <!--
-    base_height/2 = 0.075  → top surface of chassis
-    lidar cylinder height/2 = 0.035
-    Total z = 0.075 + 0.035 = 0.110
-  -->
-  <xacro:anhc_lidar_3d
-    parent_link="base_link"
-    xyz="0.0 0.0 0.110"
-    rpy="0 0 0"/>
+  <!-- 3D LiDAR is disabled for the old robot profile -->
 
-  <!-- ── Place 2D LiDAR at front of chassis ───────────────────── -->
-  <!--
-    x = base_length/2 = 0.25 (front edge)
-    z = base_height/2 + lidar_box_height/2 = 0.075 + 0.02 = 0.095
-  -->
+  <!-- ── Place 2D LiDAR on top-front of chassis ───────────────── -->
+  <!-- Tuned to stay visually attached to the body mesh -->
   <xacro:anhc_lidar_2d
     parent_link="base_link"
-    xyz="0.20 0.0 0.095"
+    xyz="0.03 0.0 0.08"
     rpy="0 0 0"/>
 
-  <!-- ── Place RGB Camera at front, slightly raised ────────────── -->
-  <!--
-    x = 0.225 (just at front edge)
-    z = 0.10 (above chassis top)
-    pitch = 0 (looking straight forward)
-  -->
+  <!-- ── Place RGB Camera on top-front, near LiDAR ────────────── -->
   <xacro:anhc_camera
     parent_link="base_link"
-    xyz="0.225 0.0 0.10"
+    xyz="0.14 0.0 0.05"
     rpy="0 0 0"/>
 
   <!-- ── Instantiate ros2_control + Gazebo plugins ────────────── -->

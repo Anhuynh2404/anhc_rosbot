@@ -11,7 +11,6 @@ import subprocess, sys, time
 REQUIRED_TOPICS = [
     ('/anhc/scan',           'sensor_msgs/msg/LaserScan'),
     ('/anhc/odom',           'nav_msgs/msg/Odometry'),
-    ('/anhc/lidar_3d/points','sensor_msgs/msg/PointCloud2'),
     ('/anhc/map',            'nav_msgs/msg/OccupancyGrid'),
     ('/anhc/planned_path',   'nav_msgs/msg/Path'),
     ('/anhc/cmd_vel',        'geometry_msgs/msg/Twist'),
