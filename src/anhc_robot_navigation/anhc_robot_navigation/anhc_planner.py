@@ -1,19 +1,6 @@
 """
-╔══════════════════════════════════════════════════════════════════╗
-║               ANHC PLANNER NODE  (v2 — coord-fixed)             ║
-║                                                                  ║
-║  Coordinate convention matches map_handler:                     ║
-║    col = (world_x - origin_x) / resolution                      ║
-║    row = (world_y - origin_y) / resolution  ← row 0 = south     ║
-║                                                                  ║
-║  Subscribes: /anhc/map           nav_msgs/OccupancyGrid          ║
-║              /anhc/goal          geometry_msgs/PoseStamped       ║
-║              /anhc/odom          nav_msgs/Odometry               ║
-║  Publishes:  /anhc/planned_path  nav_msgs/Path                   ║
-║              /anhc/goal_marker   visualization_msgs/Marker       ║
-╚══════════════════════════════════════════════════════════════════╝
+ANHC Planner Node v3 — waits for valid map before planning
 """
-
 import math
 import rclpy
 from rclpy.node import Node
@@ -31,14 +18,14 @@ class AnhcPlannerNode(Node):
     def __init__(self):
         super().__init__('anhc_planner_node')
 
-        # ── Parameters ───────────────────────────────────────────
         self.declare_parameter('inflation_radius', 3)
-        self.declare_parameter('heuristic',   'diagonal')
+        self.declare_parameter('heuristic', 'diagonal')
+        self.declare_parameter('min_free_cells', 50)  # wait for this many free cells
 
         self.inflation_radius = self.get_parameter('inflation_radius').value
         self.heuristic        = self.get_parameter('heuristic').value
+        self.min_free_cells   = self.get_parameter('min_free_cells').value
 
-        # ── State ────────────────────────────────────────────────
         self.planner    = None
         self.goal_pose  = None
         self.robot_x    = -7.0
@@ -48,6 +35,7 @@ class AnhcPlannerNode(Node):
         self.origin_y   = -10.0
         self.map_rows   = 0
         self.map_cols   = 0
+        self.map_has_data = False   # True when map has enough free cells
 
         map_qos = QoSProfile(
             depth=1,
@@ -55,7 +43,6 @@ class AnhcPlannerNode(Node):
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
         )
 
-        # ── Subscribers ───────────────────────────────────────────
         self.create_subscription(
             OccupancyGrid, '/anhc/map', self.map_callback, map_qos)
         self.create_subscription(
@@ -63,18 +50,14 @@ class AnhcPlannerNode(Node):
         self.create_subscription(
             Odometry, '/anhc/odom', self.odom_callback, 10)
 
-        # ── Publishers ────────────────────────────────────────────
         self.path_pub        = self.create_publisher(Path,   '/anhc/planned_path', 10)
         self.goal_marker_pub = self.create_publisher(Marker, '/anhc/goal_marker',  10)
 
-        self.get_logger().info('[Planner] Ready — waiting for /anhc/goal')
-        self.get_logger().info(
-            '[Planner] To send goal:\n'
-            '  ros2 topic pub --once /anhc/goal geometry_msgs/msg/PoseStamped '
-            '"{header: {frame_id: odom}, pose: {position: {x: 7.0, y: 0.0}}}"'
-        )
+        # Retry timer: re-plan every 3s if goal set but map not ready
+        self.retry_timer = self.create_timer(3.0, self._retry_plan)
 
-    # ── Callbacks ─────────────────────────────────────────────────
+        self.get_logger().info('[Planner] Ready — waiting for map and goal')
+
     def odom_callback(self, msg):
         self.robot_x = msg.pose.pose.position.x
         self.robot_y = msg.pose.pose.position.y
@@ -86,14 +69,20 @@ class AnhcPlannerNode(Node):
         self.map_cols   = msg.info.width
         self.map_rows   = msg.info.height
 
-        # ── Unflatten: nav_msgs row 0 = bottom (south) ──────────
-        # Build grid[row][col] where row 0 = south = origin_y
         grid_2d = []
         for row_idx in range(self.map_rows):
             start = row_idx * self.map_cols
             row   = msg.data[start: start + self.map_cols]
             row   = [0 if v < 0 else int(v) for v in row]
             grid_2d.append(row)
+
+        # Count free cells to know if map is useful
+        free_count = sum(1 for row in grid_2d for v in row if v == 0)
+        self.map_has_data = free_count >= self.min_free_cells
+
+        if not self.map_has_data:
+            self.get_logger().debug(
+                f'[Planner] Map building... {free_count}/{self.min_free_cells} free cells')
 
         if self.planner is None:
             self.planner = AStarPlanner(
@@ -105,46 +94,52 @@ class AnhcPlannerNode(Node):
         else:
             self.planner.update_grid(grid_2d)
 
-        if self.goal_pose is not None:
+        if self.goal_pose is not None and self.map_has_data:
             self._run_astar()
 
     def goal_callback(self, msg: PoseStamped):
         self.goal_pose = msg
         self.get_logger().info(
-            f'[Planner] Goal received: '
-            f'({msg.pose.position.x:.2f}, {msg.pose.position.y:.2f})'
-        )
+            f'[Planner] Goal: ({msg.pose.position.x:.2f}, {msg.pose.position.y:.2f})')
         self._publish_goal_marker(msg)
+
+        if not self.map_has_data:
+            self.get_logger().warn(
+                '[Planner] Map not ready yet — will plan when map has enough data')
+            return
         if self.planner is not None:
             self._run_astar()
-        else:
-            self.get_logger().warn('[Planner] No map yet — will plan when map arrives')
 
-    # ── A* planning ───────────────────────────────────────────────
+    def _retry_plan(self):
+        """Retry planning if goal is set but map wasn't ready before."""
+        if (self.goal_pose is not None and
+                self.planner is not None and
+                self.map_has_data):
+            # Check if path was already published successfully
+            self._run_astar()
+
     def _run_astar(self):
-        # ── World → grid (matching map_handler convention) ───────
         start = (self._w2r(self.robot_y), self._w2c(self.robot_x))
         goal  = (self._w2r(self.goal_pose.pose.position.y),
                  self._w2c(self.goal_pose.pose.position.x))
 
-        self.get_logger().info(
-            f'[Planner] Planning grid {start} → {goal} '
-            f'(world ({self.robot_x:.1f},{self.robot_y:.1f}) → '
-            f'({self.goal_pose.pose.position.x:.1f},'
-            f'{self.goal_pose.pose.position.y:.1f}))'
-        )
-
         if not self._valid(*start):
-            self.get_logger().error(f'[Planner] Start {start} out of bounds')
+            self.get_logger().error(f'[Planner] Start {start} OOB')
             return
         if not self._valid(*goal):
-            self.get_logger().error(f'[Planner] Goal {goal} out of bounds')
+            self.get_logger().error(f'[Planner] Goal {goal} OOB')
             return
+
+        self.get_logger().info(
+            f'[Planner] A* {start}→{goal} '
+            f'(world ({self.robot_x:.1f},{self.robot_y:.1f})→'
+            f'({self.goal_pose.pose.position.x:.1f},'
+            f'{self.goal_pose.pose.position.y:.1f}))')
 
         try:
             cells = self.planner.plan(start, goal)
         except ValueError as e:
-            self.get_logger().error(f'[Planner] A* error: {e}')
+            self.get_logger().error(f'[Planner] {e}')
             return
 
         if cells is None:
@@ -153,11 +148,8 @@ class AnhcPlannerNode(Node):
 
         self.get_logger().info(
             f'[Planner] ✅ {len(cells)} cells '
-            f'({len(cells)*self.resolution:.1f}m) | '
-            f'{self.planner.stats}'
-        )
+            f'({len(cells)*self.resolution:.1f}m) | {self.planner.stats}')
 
-        # ── Grid → world → nav_msgs/Path ─────────────────────────
         path_msg = Path()
         path_msg.header.stamp    = self.get_clock().now().to_msg()
         path_msg.header.frame_id = 'odom'
@@ -171,38 +163,26 @@ class AnhcPlannerNode(Node):
             path_msg.poses.append(ps)
 
         self.path_pub.publish(path_msg)
-        self.get_logger().info('[Planner] Path published → /anhc/planned_path')
+        self.get_logger().info('[Planner] Path → /anhc/planned_path')
 
-    # ── Coordinate helpers ────────────────────────────────────────
-    def _w2c(self, x):
-        return int((x - self.origin_x) / self.resolution)
+    def _w2c(self, x):   return int((x - self.origin_x) / self.resolution)
+    def _w2r(self, y):   return int((y - self.origin_y) / self.resolution)
+    def _c2w(self, col): return self.origin_x + (col + 0.5) * self.resolution
+    def _r2w(self, row): return self.origin_y + (row + 0.5) * self.resolution
+    def _valid(self, r, c): return 0 <= r < self.map_rows and 0 <= c < self.map_cols
 
-    def _w2r(self, y):
-        return int((y - self.origin_y) / self.resolution)
-
-    def _c2w(self, col):
-        return self.origin_x + (col + 0.5) * self.resolution
-
-    def _r2w(self, row):
-        return self.origin_y + (row + 0.5) * self.resolution
-
-    def _valid(self, r, c):
-        return 0 <= r < self.map_rows and 0 <= c < self.map_cols
-
-    # ── Goal marker ───────────────────────────────────────────────
-    def _publish_goal_marker(self, goal: PoseStamped):
+    def _publish_goal_marker(self, goal):
         m = Marker()
-        m.header.frame_id    = 'odom'
-        m.header.stamp       = self.get_clock().now().to_msg()
-        m.ns, m.id           = 'anhc_goal', 0
-        m.type               = Marker.CYLINDER
-        m.action             = Marker.ADD
-        m.pose               = goal.pose
-        m.pose.position.z    = 0.5
+        m.header.frame_id = 'odom'
+        m.header.stamp    = self.get_clock().now().to_msg()
+        m.ns, m.id        = 'anhc_goal', 0
+        m.type            = Marker.CYLINDER
+        m.action          = Marker.ADD
+        m.pose            = goal.pose
+        m.pose.position.z = 0.5
         m.scale.x = m.scale.y = 0.5
-        m.scale.z            = 1.0
-        m.color.r, m.color.g = 1.0, 0.4
-        m.color.a            = 0.85
+        m.scale.z = 1.0
+        m.color.r = 1.0; m.color.g = 0.4; m.color.a = 0.85
         self.goal_marker_pub.publish(m)
 
 

@@ -1,13 +1,12 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-
   <xacro:macro name="anhc_lidar_3d" params="parent_link xyz rpy">
 
     <link name="anhc_lidar_3d_link">
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry><cylinder radius="0.04" length="0.07"/></geometry>
-        <material name="anhc_lidar_material">
+        <material name="anhc_lidar3d_mat">
           <color rgba="0.8 0.1 0.1 1.0"/>
         </material>
       </visual>
@@ -30,18 +29,19 @@
 
     <gazebo reference="anhc_lidar_3d_link">
       <sensor name="anhc_lidar_3d_sensor" type="gpu_lidar">
+        <pose>0 0 0 0 0 0</pose>
         <topic>/anhc/lidar_3d/points</topic>
+        <frame_id>anhc_lidar_3d_link</frame_id>
         <update_rate>10</update_rate>
         <always_on>true</always_on>
-        <enabled>true</enabled>
         <visualize>false</visualize>
         <lidar>
           <scan>
             <horizontal>
               <samples>360</samples>
               <resolution>1</resolution>
-              <min_angle>-3.14159</min_angle>
-              <max_angle>3.14159</max_angle>
+              <min_angle>-3.14159265</min_angle>
+              <max_angle>3.14159265</max_angle>
             </horizontal>
             <vertical>
               <samples>16</samples>

@@ -3,13 +3,11 @@
 
   <xacro:macro name="anhc_camera" params="parent_link xyz rpy">
 
-    <link name="anhc_camera_link">
+    <link name="camera_link">
       <visual>
+        <!-- Use simple box to avoid mesh local-frame offsets -->
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry><box size="0.025 0.09 0.025"/></geometry>
-        <material name="anhc_camera_material">
-          <color rgba="0.1 0.1 0.1 1.0"/>
-        </material>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -22,25 +20,25 @@
       </inertial>
     </link>
 
-    <joint name="anhc_camera_joint" type="fixed">
+    <joint name="camera_joint" type="fixed">
       <parent link="${parent_link}"/>
-      <child  link="anhc_camera_link"/>
+      <child  link="camera_link"/>
       <origin xyz="${xyz}" rpy="${rpy}"/>
     </joint>
 
-    <link name="anhc_camera_optical_link"/>
-    <joint name="anhc_camera_optical_joint" type="fixed">
-      <parent link="anhc_camera_link"/>
-      <child  link="anhc_camera_optical_link"/>
+    <link name="camera_optical_link"/>
+    <joint name="camera_optical_joint" type="fixed">
+      <parent link="camera_link"/>
+      <child  link="camera_optical_link"/>
       <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
     </joint>
 
-    <gazebo reference="anhc_camera_link">
+    <gazebo reference="camera_link">
       <sensor name="anhc_camera_sensor" type="camera">
-        <topic>/anhc/camera</topic>
+        <topic>/anhc/camera/image</topic>
+        <frame_id>camera_optical_link</frame_id>
         <update_rate>30</update_rate>
         <always_on>true</always_on>
-        <enabled>true</enabled>
         <visualize>false</visualize>
         <camera>
           <horizontal_fov>1.3962634</horizontal_fov>

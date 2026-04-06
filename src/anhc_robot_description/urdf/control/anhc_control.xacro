@@ -13,7 +13,7 @@
         <plugin>gz_ros2_control/GazeboSimSystem</plugin>
       </hardware>
 
-      <joint name="anhc_fl_wheel_joint">
+      <joint name="front_left_wheel_joint">
         <command_interface name="velocity">
           <param name="min">-5.0</param>
           <param name="max"> 5.0</param>
@@ -21,7 +21,7 @@
         <state_interface name="position"/>
         <state_interface name="velocity"/>
       </joint>
-      <joint name="anhc_fr_wheel_joint">
+      <joint name="front_right_wheel_joint">
         <command_interface name="velocity">
           <param name="min">-5.0</param>
           <param name="max"> 5.0</param>
@@ -29,7 +29,7 @@
         <state_interface name="position"/>
         <state_interface name="velocity"/>
       </joint>
-      <joint name="anhc_rl_wheel_joint">
+      <joint name="back_left_wheel_joint">
         <command_interface name="velocity">
           <param name="min">-5.0</param>
           <param name="max"> 5.0</param>
@@ -37,7 +37,7 @@
         <state_interface name="position"/>
         <state_interface name="velocity"/>
       </joint>
-      <joint name="anhc_rr_wheel_joint">
+      <joint name="back_right_wheel_joint">
         <command_interface name="velocity">
           <param name="min">-5.0</param>
           <param name="max"> 5.0</param>
@@ -68,13 +68,13 @@
         filename="gz-sim-diff-drive-system"
         name="gz::sim::systems::DiffDrive">
 
-        <left_joint>anhc_fl_wheel_joint</left_joint>
-        <left_joint>anhc_rl_wheel_joint</left_joint>
-        <right_joint>anhc_fr_wheel_joint</right_joint>
-        <right_joint>anhc_rr_wheel_joint</right_joint>
+        <left_joint>front_left_wheel_joint</left_joint>
+        <left_joint>back_left_wheel_joint</left_joint>
+        <right_joint>front_right_wheel_joint</right_joint>
+        <right_joint>back_right_wheel_joint</right_joint>
 
-        <wheel_separation>0.400</wheel_separation>
-        <wheel_radius>0.075</wheel_radius>
+        <wheel_separation>0.169</wheel_separation>
+        <wheel_radius>0.0325</wheel_radius>
 
         <!-- Listen for velocity commands -->
         <topic>/anhc/cmd_vel</topic>

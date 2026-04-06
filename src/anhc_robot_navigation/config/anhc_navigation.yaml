@@ -30,3 +30,14 @@ anhc_path_follower_node:
     waypoint_tolerance: 0.3
     lookahead_distance: 0.5
     use_sim_time:      true
+
+# Map handler — tăng thời gian build map trước khi plan
+anhc_map_handler_node:
+  ros__parameters:
+    map_width_m:    20.0
+    map_height_m:   20.0
+    map_resolution: 0.1
+    map_origin_x:  -10.0
+    map_origin_y:  -10.0
+    publish_rate:   2.0
+    use_sim_time:   true

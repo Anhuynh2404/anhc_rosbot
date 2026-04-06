@@ -1,19 +1,9 @@
 """
-╔══════════════════════════════════════════════════════════════════╗
-║              ANHC MAP HANDLER NODE  (v2 — coord-fixed)          ║
-║                                                                  ║
-║  Subscribes: /anhc/scan   sensor_msgs/LaserScan                 ║
-║              /anhc/odom   nav_msgs/Odometry                     ║
-║  Publishes:  /anhc/map    nav_msgs/OccupancyGrid                 ║
-║                                                                  ║
-║  Coordinate convention (matches nav_msgs standard):             ║
-║    - grid[row][col]                                              ║
-║    - col = (world_x - origin_x) / resolution                    ║
-║    - row = (world_y - origin_y) / resolution   ← row 0 = bottom ║
-║    - OccupancyGrid.data is row-major, row 0 at index 0 = bottom ║
-╚══════════════════════════════════════════════════════════════════╝
+ANHC Map Handler v3
+- Dùng tf2 để lấy sensor pose thay vì odom trực tiếp
+- Fallback về odom nếu TF không available
+- Handle LaserScan frame_id đúng cách
 """
-
 import math
 import numpy as np
 import rclpy
@@ -24,13 +14,18 @@ from sensor_msgs.msg   import LaserScan
 from nav_msgs.msg      import OccupancyGrid, Odometry
 from geometry_msgs.msg import Pose
 
+try:
+    from tf2_ros import Buffer, TransformListener
+    TF2_AVAILABLE = True
+except ImportError:
+    TF2_AVAILABLE = False
+
 
 class AnhcMapHandlerNode(Node):
 
     def __init__(self):
         super().__init__('anhc_map_handler_node')
 
-        # ── Parameters ───────────────────────────────────────────
         self.declare_parameter('map_width_m',    20.0)
         self.declare_parameter('map_height_m',   20.0)
         self.declare_parameter('map_resolution',  0.1)
@@ -47,44 +42,38 @@ class AnhcMapHandlerNode(Node):
         self.map_cols   = int(w / res)
         self.map_rows   = int(h / res)
 
-        # ── Grid: row=0 is SOUTH (y=origin_y), increases northward ──
-        # -1=unknown  0=free  100=occupied
-        self.grid = np.full(
-            (self.map_rows, self.map_cols), -1, dtype=np.int8
-        )
+        self.grid = np.full((self.map_rows, self.map_cols), -1, dtype=np.int8)
 
-        # Robot pose
-        self.robot_x   = 0.0
-        self.robot_y   = 0.0
-        self.robot_yaw = 0.0
+        # Robot pose from odom (fallback)
+        self.robot_x   = -7.0
+        self.robot_y   =  0.0
+        self.robot_yaw =  0.0
+        self.odom_received = False
 
-        # QoS — transient local so late subscribers get last map
+        # TF2 for getting sensor pose
+        if TF2_AVAILABLE:
+            self.tf_buffer   = Buffer()
+            self.tf_listener = TransformListener(self.tf_buffer, self)
+
         map_qos = QoSProfile(
             depth=1,
             reliability=ReliabilityPolicy.RELIABLE,
             durability=DurabilityPolicy.TRANSIENT_LOCAL,
         )
 
-        # ── Subscribers ───────────────────────────────────────────
-        self.create_subscription(
-            LaserScan, '/anhc/scan', self.scan_callback, 10)
-        self.create_subscription(
-            Odometry, '/anhc/odom', self.odom_callback, 10)
-
-        # ── Publisher ─────────────────────────────────────────────
-        self.map_pub = self.create_publisher(
-            OccupancyGrid, '/anhc/map', map_qos)
+        self.create_subscription(LaserScan, '/anhc/scan', self.scan_callback, 10)
+        self.create_subscription(Odometry,  '/anhc/odom', self.odom_callback, 10)
+        self.map_pub = self.create_publisher(OccupancyGrid, '/anhc/map', map_qos)
 
         rate = self.get_parameter('publish_rate').value
         self.create_timer(1.0 / rate, self.publish_map)
 
         self.get_logger().info(
-            f'[MapHandler] {self.map_rows}×{self.map_cols} @ {res}m/cell '
+            f'[MapHandler] {self.map_rows}x{self.map_cols} @ {res}m/cell '
             f'origin=({self.origin_x},{self.origin_y})'
         )
 
-    # ── Odom ──────────────────────────────────────────────────────
-    def odom_callback(self, msg: Odometry) -> None:
+    def odom_callback(self, msg: Odometry):
         self.robot_x = msg.pose.pose.position.x
         self.robot_y = msg.pose.pose.position.y
         q = msg.pose.pose.orientation
@@ -92,16 +81,44 @@ class AnhcMapHandlerNode(Node):
             2*(q.w*q.z + q.x*q.y),
             1 - 2*(q.y*q.y + q.z*q.z)
         )
+        self.odom_received = True
 
-    # ── Scan → grid ───────────────────────────────────────────────
-    def scan_callback(self, msg: LaserScan) -> None:
+    def _get_sensor_pose(self, frame_id: str):
         """
-        Ray-cast each laser beam:
-          - cells along beam  → free (0)
-          - endpoint cell     → occupied (100)
+        Get sensor pose in odom frame via TF2.
+        Falls back to robot odom pose if TF not available.
         """
-        rc = self._w2c(self.robot_x)
-        rr = self._w2r(self.robot_y)
+        if not TF2_AVAILABLE or not self.odom_received:
+            return self.robot_x, self.robot_y, self.robot_yaw
+
+        try:
+            # Try to get transform from odom to sensor frame
+            t = self.tf_buffer.lookup_transform(
+                'odom', frame_id,
+                rclpy.time.Time(),
+                timeout=rclpy.duration.Duration(seconds=0.1)
+            )
+            x = t.transform.translation.x
+            y = t.transform.translation.y
+            q = t.transform.rotation
+            yaw = math.atan2(
+                2*(q.w*q.z + q.x*q.y),
+                1 - 2*(q.y*q.y + q.z*q.z)
+            )
+            return x, y, yaw
+        except Exception:
+            # Fallback to odom
+            return self.robot_x, self.robot_y, self.robot_yaw
+
+    def scan_callback(self, msg: LaserScan):
+        if not self.odom_received:
+            return
+
+        # Get actual sensor position
+        sx, sy, syaw = self._get_sensor_pose(msg.header.frame_id)
+
+        rc = self._w2c(sx)
+        rr = self._w2r(sy)
         angle = msg.angle_min
 
         for r in msg.ranges:
@@ -111,23 +128,20 @@ class AnhcMapHandlerNode(Node):
             if not (msg.range_min <= r <= msg.range_max):
                 continue
 
-            world_angle = self.robot_yaw + angle
-            hx = self.robot_x + r * math.cos(world_angle)
-            hy = self.robot_y + r * math.sin(world_angle)
+            world_angle = syaw + angle
+            hx = sx + r * math.cos(world_angle)
+            hy = sy + r * math.sin(world_angle)
             hc = self._w2c(hx)
             hr = self._w2r(hy)
 
-            # Free cells along ray (exclude endpoint)
             for fr, fc in self._bresenham(rr, rc, hr, hc)[:-1]:
                 if self._ok(fr, fc) and self.grid[fr, fc] != 100:
                     self.grid[fr, fc] = 0
 
-            # Occupied endpoint
             if self._ok(hr, hc):
                 self.grid[hr, hc] = 100
 
-    # ── Publish map ───────────────────────────────────────────────
-    def publish_map(self) -> None:
+    def publish_map(self):
         msg = OccupancyGrid()
         msg.header.stamp    = self.get_clock().now().to_msg()
         msg.header.frame_id = 'odom'
@@ -138,25 +152,15 @@ class AnhcMapHandlerNode(Node):
         msg.info.origin.position.x    = self.origin_x
         msg.info.origin.position.y    = self.origin_y
         msg.info.origin.orientation.w = 1.0
-        # nav_msgs: row 0 = bottom → our grid row 0 is already bottom → no flip
         msg.data = self.grid.flatten().tolist()
         self.map_pub.publish(msg)
 
-    # ── Coordinate helpers ────────────────────────────────────────
-    def _w2c(self, x: float) -> int:
-        """World X → grid column."""
-        return int((x - self.origin_x) / self.resolution)
-
-    def _w2r(self, y: float) -> int:
-        """World Y → grid row (row 0 = south = y=origin_y)."""
-        return int((y - self.origin_y) / self.resolution)
-
-    def _ok(self, r: int, c: int) -> bool:
-        return 0 <= r < self.map_rows and 0 <= c < self.map_cols
+    def _w2c(self, x): return int((x - self.origin_x) / self.resolution)
+    def _w2r(self, y): return int((y - self.origin_y) / self.resolution)
+    def _ok(self, r, c): return 0 <= r < self.map_rows and 0 <= c < self.map_cols
 
     @staticmethod
     def _bresenham(r0, c0, r1, c1):
-        """All cells on the line from (r0,c0) to (r1,c1)."""
         cells, dr, dc = [], abs(r1-r0), abs(c1-c0)
         r, c = r0, c0
         sr, sc = (1 if r1>r0 else -1), (1 if c1>c0 else -1)

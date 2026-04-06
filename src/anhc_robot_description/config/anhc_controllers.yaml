@@ -10,11 +10,11 @@ controller_manager:
 
 anhc_diff_drive_controller:
   ros__parameters:
-    left_wheel_names:  ["anhc_fl_wheel_joint", "anhc_rl_wheel_joint"]
-    right_wheel_names: ["anhc_fr_wheel_joint", "anhc_rr_wheel_joint"]
+    left_wheel_names:  ["front_left_wheel_joint", "back_left_wheel_joint"]
+    right_wheel_names: ["front_right_wheel_joint", "back_right_wheel_joint"]
 
-    wheel_separation: 0.400
-    wheel_radius:     0.075
+    wheel_separation: 0.169
+    wheel_radius:     0.0325
 
     odom_frame_id:   odom
     base_frame_id:   base_footprint

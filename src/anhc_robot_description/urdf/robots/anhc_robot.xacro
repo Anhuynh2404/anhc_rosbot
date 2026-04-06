@@ -21,7 +21,7 @@
   <material name="anhc_camera_material">  <color rgba="0.1 0.1 0.1 1.0"/> </material>
 
   <!-- ── Instantiate Mechanical Base ─────────────────────────── -->
-  <!-- (base.xacro defines base_footprint, anhc_base_link, 4 wheels) -->
+  <!-- (base.xacro defines base_footprint, base_link, 4 wheels) -->
 
   <!-- ── Place 3D LiDAR on top-center of chassis ─────────────── -->
   <!--
@@ -30,7 +30,7 @@
     Total z = 0.075 + 0.035 = 0.110
   -->
   <xacro:anhc_lidar_3d
-    parent_link="anhc_base_link"
+    parent_link="base_link"
     xyz="0.0 0.0 0.110"
     rpy="0 0 0"/>
 
@@ -40,7 +40,7 @@
     z = base_height/2 + lidar_box_height/2 = 0.075 + 0.02 = 0.095
   -->
   <xacro:anhc_lidar_2d
-    parent_link="anhc_base_link"
+    parent_link="base_link"
     xyz="0.20 0.0 0.095"
     rpy="0 0 0"/>
 
@@ -51,7 +51,7 @@
     pitch = 0 (looking straight forward)
   -->
   <xacro:anhc_camera
-    parent_link="anhc_base_link"
+    parent_link="base_link"
     xyz="0.225 0.0 0.10"
     rpy="0 0 0"/>
 
@@ -68,13 +68,13 @@
     </inertial>
   </link>
   <joint name="anhc_imu_joint" type="fixed">
-    <parent link="anhc_base_link"/>
+    <parent link="base_link"/>
     <child  link="anhc_imu_link"/>
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
   <!-- ── Gazebo Physics Properties ────────────────────────────── -->
-  <gazebo reference="anhc_base_link">
+  <gazebo reference="base_link">
     <mu1>0.8</mu1>
     <mu2>0.8</mu2>
     <kp>1e6</kp>
@@ -82,19 +82,19 @@
     <material>Gazebo/Blue</material>
   </gazebo>
 
-  <gazebo reference="anhc_fl_wheel_link">
+  <gazebo reference="front_left_wheel_link">
     <mu1>1.0</mu1><mu2>1.0</mu2><kp>1e6</kp><kd>1.0</kd>
     <material>Gazebo/Black</material>
   </gazebo>
-  <gazebo reference="anhc_fr_wheel_link">
+  <gazebo reference="front_right_wheel_link">
     <mu1>1.0</mu1><mu2>1.0</mu2><kp>1e6</kp><kd>1.0</kd>
     <material>Gazebo/Black</material>
   </gazebo>
-  <gazebo reference="anhc_rl_wheel_link">
+  <gazebo reference="back_left_wheel_link">
     <mu1>1.0</mu1><mu2>1.0</mu2><kp>1e6</kp><kd>1.0</kd>
     <material>Gazebo/Black</material>
   </gazebo>
-  <gazebo reference="anhc_rr_wheel_link">
+  <gazebo reference="back_right_wheel_link">
     <mu1>1.0</mu1><mu2>1.0</mu2><kp>1e6</kp><kd>1.0</kd>
     <material>Gazebo/Black</material>
   </gazebo>
