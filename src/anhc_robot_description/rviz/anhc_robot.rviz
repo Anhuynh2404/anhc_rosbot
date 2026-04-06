@@ -79,3 +79,6 @@ Visualization Manager:
       Scale: 50
       X: 0.0
       Y: 0.0
+
+Preferences:
+  PromptSaveOnExit: true
